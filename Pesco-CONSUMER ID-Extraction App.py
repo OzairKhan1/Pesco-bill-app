@@ -103,23 +103,27 @@ if uploaded_file:
                         service=Service(ChromeDriverManager().install()),
                         options=chrome_options
                     )
-                    wait = WebDriverWait(driver, 10)
+                    wait = WebDriverWait(driver, 30)  # Increased timeout to 30 seconds
 
                     try:
                         driver.get("https://bill.pitc.com.pk/pescobill")
-                        time.sleep(1)
+                        time.sleep(3)  # Increased sleep time for slower networks
+
+                        # Log the page source for debugging
+                        with open("page_source.html", "w") as f:
+                            f.write(driver.page_source)
 
                         for i, (index, row) in enumerate(df.iterrows(), start=1):
                             acc_raw = row[selected_col]
 
                             try:
                                 acc_str = str(int(float(acc_raw))).zfill(14)
-                            except:
-                                df.at[index, target_col] = ""
+                            except Exception as e:
+                                df.at[index, target_col] = f"Error: {e}"
                                 continue
 
                             if len(acc_str) != 14:
-                                df.at[index, target_col] = ""
+                                df.at[index, target_col] = "Invalid Account"
                                 continue
 
                             # Show currently processing
@@ -127,7 +131,6 @@ if uploaded_file:
 
                             try:
                                 input_box = wait.until(EC.presence_of_element_located((By.ID, "searchTextBox")))
-
                                 input_box.clear()
                                 input_box.send_keys(acc_str)
                                 input_box.send_keys(Keys.ENTER)
@@ -140,14 +143,14 @@ if uploaded_file:
                                     )
                                     consumer_id = consumer_id_td.text.strip()
                                     df.at[index, target_col] = consumer_id
-                                except Exception:
-                                    df.at[index, target_col] = ""
+                                except Exception as e:
+                                    df.at[index, target_col] = f"Error extracting ID: {e}"
 
-                                driver.get("https://bill.pitc.com.pk/pescobill")
+                                driver.get("https://bill.pitc.com.pk/pescobill")  # Reset to initial page
                                 time.sleep(1)
 
-                            except Exception:
-                                df.at[index, target_col] = "ERROR"
+                            except Exception as e:
+                                df.at[index, target_col] = f"Error: {e}"
 
                     finally:
                         driver.quit()
