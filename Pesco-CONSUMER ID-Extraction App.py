@@ -9,6 +9,19 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 import time
 import io
+import os
+import subprocess
+
+# --- Ensure Chromium is installed (for Streamlit Cloud or Docker) ---
+try:
+    subprocess.run(['apt-get', 'update'], check=True)
+    subprocess.run(['apt-get', 'install', '-y', 'chromium-chromedriver', 'chromium-browser'], check=True)
+except Exception as e:
+    st.warning(f"⚠️ Installation error (can be ignored locally): {e}")
+
+# Set environment variables
+os.environ['PATH'] += ':/usr/lib/chromium-browser/'
+os.environ['CHROME_BIN'] = '/usr/bin/chromium-browser'
 
 # ---------------------------------------------
 # Streamlit UI
@@ -57,7 +70,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Use session_state to preserve downloaded file
 if "excel_data" not in st.session_state:
     st.session_state.excel_data = None
 
@@ -92,11 +104,13 @@ if uploaded_file:
                 with st.spinner("🔄 Please wait... Extracting data from PESCO website..."):
 
                     chrome_options = Options()
-                    chrome_options.add_argument("--disable-gpu")
-                    chrome_options.add_argument("--no-sandbox")
+                    chrome_options.binary_location = os.environ.get("CHROME_BIN")
+                    chrome_options.add_argument("--headless")
                     chrome_options.add_argument("--disable-dev-shm-usage")
+                    chrome_options.add_argument("--no-sandbox")
 
-                    driver = webdriver.Chrome(service=Service(), options=chrome_options)
+                    driver = webdriver.Chrome(executable_path="/usr/lib/chromium-browser/chromedriver",
+                                              options=chrome_options)
                     wait = WebDriverWait(driver, 10)
 
                     try:
@@ -116,7 +130,6 @@ if uploaded_file:
                                 df.at[index, target_col] = ""
                                 continue
 
-                            # Show currently processing
                             st.info(f"🔁 [{i}] Extracting data for Account: {acc_str}")
 
                             try:
@@ -162,12 +175,10 @@ if uploaded_file:
     except Exception as e:
         st.error(f"❌ Error reading file: {e}")
 
-# Keep download button even after refresh
 if st.session_state.excel_data:
     st.download_button(
         label="📥 Download Updated Excel",
         data=st.session_state.excel_data,
         file_name="updated_data.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
     )
