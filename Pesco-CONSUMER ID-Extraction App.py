@@ -67,7 +67,8 @@ uploaded_file = st.file_uploader("📤 Upload your Excel file", type=["xlsx", "x
 if uploaded_file:
     try:
         df = pd.read_excel(uploaded_file, engine="openpyxl")
-        df = df.where(pd.notnull(df), "")  # Fill NaN with empty strings
+        df = df.where(pd.notnull(df), "")
+        df = df.astype(str)  # ✅ Force all values to string to avoid ArrowTypeError
         st.success("✅ File uploaded successfully.")
         st.write("📄 Preview of Uploaded Data:")
         st.dataframe(df)
@@ -107,11 +108,7 @@ if uploaded_file:
 
                     try:
                         driver.get("https://bill.pitc.com.pk/pescobill")
-                        time.sleep(3)  # Increased sleep time for slower networks
-
-                        # Log the page source for debugging
-                        with open("page_source.html", "w") as f:
-                            f.write(driver.page_source)
+                        time.sleep(3)
 
                         for i, (index, row) in enumerate(df.iterrows(), start=1):
                             acc_raw = row[selected_col]
@@ -126,7 +123,6 @@ if uploaded_file:
                                 df.at[index, target_col] = "Invalid Account"
                                 continue
 
-                            # Show currently processing
                             st.info(f"🔁 [{i}] Extracting data for Account: {acc_str}")
 
                             try:
@@ -146,7 +142,7 @@ if uploaded_file:
                                 except Exception as e:
                                     df.at[index, target_col] = f"Error extracting ID: {e}"
 
-                                driver.get("https://bill.pitc.com.pk/pescobill")  # Reset to initial page
+                                driver.get("https://bill.pitc.com.pk/pescobill")
                                 time.sleep(1)
 
                             except Exception as e:
@@ -156,14 +152,15 @@ if uploaded_file:
                         driver.quit()
 
                     st.success("✅ Extraction completed successfully.")
+                    df = df.astype(str)  # ✅ Ensure all data is string for rendering
                     st.write("🔎 Final Updated Data:")
                     st.dataframe(df)
 
                     @st.cache_data
                     def to_excel(df: pd.DataFrame):
+                        df = df.astype(str)  # ✅ Avoid ArrowTypeError in Excel download
                         output = io.BytesIO()
                         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-                            df[selected_col] = df[selected_col].astype(str)  # Force text
                             df.to_excel(writer, index=False, sheet_name="Data")
                         return output.getvalue()
 
