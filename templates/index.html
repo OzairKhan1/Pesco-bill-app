@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Converter Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+        }
+        
+        .converter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 30px;
+        }
+        
+        .converter-card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .converter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.2);
+        }
+        
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+        
+        .card-icon.txt-to-zip {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .card-icon.zip-to-txt {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+        }
+        
+        .converter-card h2 {
+            color: #1a1a2e;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .converter-card .description {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        
+        .upload-zone {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+        
+        .upload-zone:hover {
+            border-color: #667eea;
+            background: #f5f3ff;
+        }
+        
+        .upload-zone.dragover {
+            border-color: #667eea;
+            background: #ede9fe;
+            transform: scale(1.02);
+        }
+        
+        .upload-zone.processing {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        .upload-zone .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .upload-zone p {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .upload-zone .file-type {
+            color: #999;
+            font-size: 0.85rem;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            display: none;
+            font-size: 0.95rem;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            display: block;
+            border-left: 4px solid #28a745;
+        }
+        
+        .status.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            display: block;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .status.processing {
+            background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%);
+            color: #004085;
+            display: block;
+            border-left: 4px solid #007bff;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .features {
+            margin-top: 50px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .features h3 {
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            font-size: 0.95rem;
+        }
+        
+        .feature-item .icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .converter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .converter-card {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Pesco Base64 EncoderDecoder<br><b>Design By:</b> Ozair Khan</h1>
+
+            <p>Convert between encoded text files and image archives seamlessly</p>
+        </div>
+        
+        <div class="converter-grid">
+            <div class="converter-card">
+                <div class="card-icon txt-to-zip">
+                    <span>TXT</span>
+                </div>
+                <h2>Text to ZIP</h2>
+                <p class="description">
+                    Upload your encoded .txt file and receive a ZIP archive containing all extracted images with proper naming conventions.
+                </p>
+                <div class="upload-zone" id="txtDropZone">
+                    <div class="upload-icon">📄</div>
+                    <p>Drop your .txt file here</p>
+                    <p class="file-type">or click to browse</p>
+                    <input type="file" id="txtFileInput" accept=".txt">
+                </div>
+                <div class="status" id="txtStatus"></div>
+            </div>
+            
+            <div class="converter-card">
+                <div class="card-icon zip-to-txt">
+                    <span>ZIP</span>
+                </div>
+                <h2>ZIP to Text</h2>
+                <p class="description">
+                    Upload a ZIP archive (previously exported) to encode all images back into the original .txt format.
+                </p>
+                <div class="upload-zone" id="zipDropZone">
+                    <div class="upload-icon">📦</div>
+                    <p>Drop your .zip file here</p>
+                    <p class="file-type">or click to browse</p>
+                    <input type="file" id="zipFileInput" accept=".zip">
+                </div>
+                <div class="status" id="zipStatus"></div>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h3>Key Features</h3>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="icon">🔄</div>
+                    <span>Two-way conversion</span>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📁</div>
+                    <span>Organized image files</span>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🏷️</div>
+                    <span>Smart naming convention</span>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">⚡</div>
+                    <span>Fast processing</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Drag and drop or click to upload your files</p>
+        </div>
+    </div>
+    
+    <script>
+        function setupDropZone(dropZoneId, fileInputId, statusId, endpoint, expectedExt) {
+            const dropZone = document.getElementById(dropZoneId);
+            const fileInput = document.getElementById(fileInputId);
+            const status = document.getElementById(statusId);
+            
+            dropZone.addEventListener('click', () => fileInput.click());
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file) processFile(file);
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) processFile(file);
+            });
+            
+            async function processFile(file) {
+                if (!file.name.toLowerCase().endsWith(expectedExt)) {
+                    showStatus('error', `Please upload a ${expectedExt} file`);
+                    return;
+                }
+                
+                showStatus('processing', `<span class="spinner"></span>Processing ${file.name}...`);
+                dropZone.classList.add('processing');
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const contentDisposition = response.headers.get('Content-Disposition');
+                        let filename = 'download';
+                        
+                        if (contentDisposition) {
+                            const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                            if (match && match[1]) {
+                                filename = match[1].replace(/['"]/g, '');
+                            }
+                        }
+                        
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        showStatus('success', `Successfully converted! Downloading ${filename}`);
+                    } else {
+                        const data = await response.json();
+                        showStatus('error', data.error || 'An error occurred');
+                    }
+                } catch (error) {
+                    showStatus('error', 'Error processing file: ' + error.message);
+                } finally {
+                    dropZone.classList.remove('processing');
+                    fileInput.value = '';
+                }
+            }
+            
+            function showStatus(type, message) {
+                status.className = 'status ' + type;
+                status.innerHTML = message;
+            }
+        }
+        
+        setupDropZone('txtDropZone', 'txtFileInput', 'txtStatus', '/convert-txt-to-zip', '.txt');
+        setupDropZone('zipDropZone', 'zipFileInput', 'zipStatus', '/convert-zip-to-txt', '.zip');
+    </script>
+</body>
+</html>
