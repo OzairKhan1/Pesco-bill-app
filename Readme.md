@@ -1,3 +1,7 @@
+Run the Dockeriaze Image that has been Pushed to DockerHub using the below command 
+```docker run -d -p 5000:5000 ozairkhan1/pescoencoder:v2```
+
+
 # Image Converter Pro
 
 ## Overview
